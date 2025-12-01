@@ -1,0 +1,406 @@
+// Prisma Schema for CrewAI Orchestrator
+// This schema mirrors the Supabase database structure
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String    @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  email         String    @unique
+  password      String
+  name          String?
+  emailVerified Boolean   @default(false)
+  avatar        String?
+  created_at    DateTime  @default(now()) @db.Timestamptz
+  updated_at    DateTime  @default(now()) @updatedAt @db.Timestamptz
+
+  workspaceMembers WorkspaceMember[]
+  createdAgents    Agent[]           @relation("AgentCreator")
+
+  @@map("users")
+}
+
+model Workspace {
+  id         String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  name       String
+  slug       String   @unique
+  plan       String   @default("free")
+  created_at DateTime @default(now()) @db.Timestamptz
+  updated_at DateTime @default(now()) @updatedAt @db.Timestamptz
+
+  members   WorkspaceMember[]
+  agents    Agent[]
+  workflows Workflow[]
+  tasks     Task[]
+
+  @@map("workspaces")
+}
+
+model WorkspaceMember {
+  id           String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  workspaceId  String   @db.Uuid
+  userId       String   @db.Uuid
+  role         String   @default("member")
+  joined_at    DateTime @default(now()) @db.Timestamptz
+
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  comments      Comment[]
+  cursorSessions CursorSession[]
+  activityLogs  ActivityLog[]
+
+  @@unique([workspaceId, userId])
+  @@map("workspace_members")
+}
+
+model Agent {
+  id                String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  workspaceId       String   @db.Uuid
+  createdById       String   @db.Uuid
+  name              String
+  role              String
+  goal              String
+  backstory         String?
+  model             String   @default("openai/gpt-4")
+  temperature       Decimal  @default(0.7) @db.Decimal(3, 2)
+  max_tokens        Int      @default(2000)
+  tools             String[] @default([])
+  status            String   @default("idle")
+  total_executions  Int      @default(0)
+  success_rate      Decimal  @default(0) @db.Decimal(5, 2)
+  avg_response_time Int      @default(0)
+  created_at        DateTime @default(now()) @db.Timestamptz
+  updated_at        DateTime @default(now()) @updatedAt @db.Timestamptz
+
+  workspace        Workspace        @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  createdBy        User             @relation("AgentCreator", fields: [createdById], references: [id])
+  tasks            Task[]
+  execution_traces ExecutionTrace[]
+
+  @@index([workspaceId])
+  @@map("agents")
+}
+
+model Task {
+  id                String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  workspaceId       String   @db.Uuid
+  name              String
+  description       String
+  agent_id          String?  @db.Uuid
+  dependencies      String[] @default([]) @db.Uuid
+  priority          String   @default("medium")
+  expected_output   String?
+  context_variables Json     @default("{}")
+  status            String   @default("pending")
+  execution_order   Int?
+  created_at        DateTime @default(now()) @db.Timestamptz
+  updated_at        DateTime @default(now()) @updatedAt @db.Timestamptz
+
+  workspace        Workspace        @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  agent            Agent?           @relation(fields: [agent_id], references: [id], onDelete: SetNull)
+  execution_traces ExecutionTrace[]
+
+  @@index([workspaceId])
+  @@map("tasks")
+}
+
+model Workflow {
+  id          String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  workspaceId String   @db.Uuid
+  name        String
+  description String?
+  agent_ids   String[] @default([]) @db.Uuid
+  task_ids    String[] @default([]) @db.Uuid
+  status      String   @default("draft")
+  created_at  DateTime @default(now()) @db.Timestamptz
+  updated_at  DateTime @default(now()) @updatedAt @db.Timestamptz
+
+  workspace        Workspace        @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  execution_traces ExecutionTrace[]
+
+  @@index([workspaceId])
+  @@map("workflows")
+}
+
+model ExecutionTrace {
+  id              String    @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  trace_id        String    @db.Uuid
+  span_id         String    @db.Uuid
+  parent_span_id  String?   @db.Uuid
+  workflow_id     String?   @db.Uuid
+  agent_id        String?   @db.Uuid
+  task_id         String?   @db.Uuid
+  span_name       String
+  span_type       String
+  start_time      DateTime  @db.Timestamptz
+  end_time        DateTime? @db.Timestamptz
+  duration_ms     Int?
+  status          String
+  input_data      Json?
+  output_data     Json?
+  metadata        Json      @default("{}")
+  error_message   String?
+  tokens_used     Int?
+  cost_usd        Decimal?  @db.Decimal(10, 6)
+  created_at      DateTime  @default(now()) @db.Timestamptz
+
+  workflow Workflow? @relation(fields: [workflow_id], references: [id], onDelete: Cascade)
+  agent    Agent?    @relation(fields: [agent_id], references: [id], onDelete: SetNull)
+  task     Task?     @relation(fields: [task_id], references: [id], onDelete: SetNull)
+
+  @@index([trace_id])
+  @@index([workflow_id])
+  @@index([start_time])
+  @@map("execution_traces")
+}
+
+model ExecutionLog {
+  id         String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  trace_id   String   @db.Uuid
+  span_id    String   @db.Uuid
+  log_level  String
+  message    String
+  timestamp  DateTime @default(now()) @db.Timestamptz
+  metadata   Json     @default("{}")
+
+  @@index([trace_id])
+  @@index([timestamp])
+  @@map("execution_logs")
+}
+
+model Metric {
+  id           String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  trace_id     String   @db.Uuid
+  metric_name  String
+  metric_value Decimal  @db.Decimal(12, 4)
+  metric_type  String
+  tags         Json     @default("{}")
+  timestamp    DateTime @default(now()) @db.Timestamptz
+
+  @@index([trace_id])
+  @@index([timestamp])
+  @@map("metrics")
+}
+
+model Integration {
+  id          String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  name        String   @unique
+  type        String
+  config      Json
+  credentials Json?
+  enabled     Boolean  @default(true)
+  created_at  DateTime @default(now()) @db.Timestamptz
+  updated_at  DateTime @default(now()) @updatedAt @db.Timestamptz
+
+  @@map("integrations")
+}
+
+// Real-time Collaboration
+model CursorSession {
+  id        String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  userId    String   @db.Uuid
+  workspaceId String @db.Uuid
+  pageUrl   String
+  cursorX   Int
+  cursorY   Int
+  color     String
+  lastActive DateTime @default(now()) @db.Timestamptz
+  
+  user      WorkspaceMember @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@index([workspaceId, lastActive])
+  @@map("cursor_sessions")
+}
+
+model Comment {
+  id          String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  userId      String   @db.Uuid
+  workspaceId String   @db.Uuid
+  targetType  String   // "agent", "workflow", "task"
+  targetId    String   @db.Uuid
+  content     String
+  mentions    String[] @default([]) @db.Uuid
+  resolved    Boolean  @default(false)
+  created_at  DateTime @default(now()) @db.Timestamptz
+  updated_at  DateTime @default(now()) @updatedAt @db.Timestamptz
+  
+  user        WorkspaceMember @relation(fields: [userId], references: [id], onDelete: Cascade)
+  replies     CommentReply[]
+  
+  @@index([workspaceId, targetType, targetId])
+  @@map("comments")
+}
+
+model CommentReply {
+  id         String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  commentId  String   @db.Uuid
+  userId     String   @db.Uuid
+  content    String
+  created_at DateTime @default(now()) @db.Timestamptz
+  
+  comment    Comment  @relation(fields: [commentId], references: [id], onDelete: Cascade)
+  
+  @@map("comment_replies")
+}
+
+model ActivityLog {
+  id          String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  userId      String   @db.Uuid
+  workspaceId String   @db.Uuid
+  action      String   // "created", "updated", "deleted"
+  targetType  String   // "agent", "workflow", "task"
+  targetId    String   @db.Uuid
+  targetName  String
+  metadata    Json     @default("{}")
+  created_at  DateTime @default(now()) @db.Timestamptz
+  
+  user        WorkspaceMember @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@index([workspaceId, created_at])
+  @@map("activity_logs")
+}
+
+// Agent Marketplace
+model MarketplaceAgent {
+  id            String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  name          String
+  description   String
+  category      String   // "content", "data", "business", "developer"
+  creatorId     String   @db.Uuid
+  templateData  Json     // Agent configuration
+  previewGif    String?
+  setupTime     Int      // in minutes
+  pricing       String   @default("free") // "free", "premium", "open_source"
+  price         Decimal? @db.Decimal(10, 2)
+  rating        Decimal  @default(0) @db.Decimal(3, 2)
+  usageCount    Int      @default(0)
+  verified      Boolean  @default(false)
+  published     Boolean  @default(false)
+  created_at    DateTime @default(now()) @db.Timestamptz
+  updated_at    DateTime @default(now()) @updatedAt @db.Timestamptz
+  
+  reviews       MarketplaceReview[]
+  
+  @@index([category, rating])
+  @@index([usageCount])
+  @@map("marketplace_agents")
+}
+
+model MarketplaceReview {
+  id        String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  agentId   String   @db.Uuid
+  userId    String   @db.Uuid
+  rating    Int      // 1-5
+  comment   String?
+  created_at DateTime @default(now()) @db.Timestamptz
+  
+  agent     MarketplaceAgent @relation(fields: [agentId], references: [id], onDelete: Cascade)
+  
+  @@unique([agentId, userId])
+  @@map("marketplace_reviews")
+}
+
+// Workflow Templates
+model WorkflowTemplate {
+  id            String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  name          String
+  description   String
+  category      String
+  subcategory   String?
+  templateData  Json     // Workflow + Agents + Tasks configuration
+  previewGif    String?
+  previewImage  String?
+  setupTime     Int      // in minutes
+  usageCount    Int      @default(0)
+  featured      Boolean  @default(false)
+  created_at    DateTime @default(now()) @db.Timestamptz
+  
+  @@index([category, usageCount])
+  @@map("workflow_templates")
+}
+
+// AI Playground
+model PlaygroundExperiment {
+  id           String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  workspaceId  String   @db.Uuid
+  name         String
+  models       Json     // Array of model configs to test
+  testPrompt   String
+  results      Json     // Results from each model
+  winner       String?  // Best performing model
+  promoted     Boolean  @default(false)
+  created_at   DateTime @default(now()) @db.Timestamptz
+  
+  @@index([workspaceId, created_at])
+  @@map("playground_experiments")
+}
+
+// Voice Commands
+model VoiceCommand {
+  id          String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  userId      String   @db.Uuid
+  workspaceId String   @db.Uuid
+  transcript  String
+  command     String   // Parsed command
+  executed    Boolean  @default(false)
+  result      String?
+  created_at  DateTime @default(now()) @db.Timestamptz
+  
+  @@index([workspaceId, created_at])
+  @@map("voice_commands")
+}
+
+// Onboarding Progress
+model OnboardingProgress {
+  id              String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  userId          String   @unique @db.Uuid
+  currentStep     Int      @default(0)
+  completedSteps  Int[]    @default([])
+  completed       Boolean  @default(false)
+  skipped         Boolean  @default(false)
+  created_at      DateTime @default(now()) @db.Timestamptz
+  completed_at    DateTime? @db.Timestamptz
+  
+  @@map("onboarding_progress")
+}
+
+// Workflow Analytics (enhanced)
+model WorkflowRun {
+  id              String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  workflowId      String   @db.Uuid
+  workspaceId     String   @db.Uuid
+  status          String   // "running", "success", "failed"
+  startTime       DateTime @db.Timestamptz
+  endTime         DateTime? @db.Timestamptz
+  durationMs      Int?
+  tokensUsed      Int      @default(0)
+  costUsd         Decimal  @default(0) @db.Decimal(10, 6)
+  successRate     Decimal  @default(0) @db.Decimal(5, 2)
+  metadata        Json     @default("{}")
+  
+  @@index([workflowId, startTime])
+  @@index([workspaceId, startTime])
+  @@map("workflow_runs")
+}
+
+// Natural Language Workflow Builder
+model WorkflowDraft {
+  id              String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  workspaceId     String   @db.Uuid
+  userId          String   @db.Uuid
+  naturalLanguage String   // User's original input
+  parsedStructure Json     // AI-parsed workflow structure
+  status          String   @default("draft") // "draft", "customizing", "published"
+  created_at      DateTime @default(now()) @db.Timestamptz
+  updated_at      DateTime @default(now()) @updatedAt @db.Timestamptz
+  
+  @@index([workspaceId, created_at])
+  @@map("workflow_drafts")
+}
