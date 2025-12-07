@@ -4,10 +4,6 @@ const nextConfig = {
   turbopack: {
     root: process.cwd(),
   },
-  typescript: {
-    // Temporarily ignore build errors for chart component issues
-    ignoreBuildErrors: true,
-  },
   images: {
     // <CHANGE> Configure image optimization for production
     unoptimized: false,
@@ -24,8 +20,8 @@ const nextConfig = {
   },
   // <CHANGE> Add security headers
   async headers() {
-    const corsOrigin = process.env.CORS_ORIGIN || '*'
-    
+    const corsOrigin = process.env.CORS_ORIGIN || 'http://localhost:3000'
+
     return [
       {
         source: '/api/:path*',

@@ -1,9 +1,8 @@
 import type * as React from "react"
-import type { JSX } from "@emotion/react"
 
 interface VisuallyHiddenProps {
   children: React.ReactNode
-  as?: keyof JSX.IntrinsicElements
+  as?: React.ElementType
 }
 
 export function VisuallyHidden({ children, as: Component = "span" }: VisuallyHiddenProps) {

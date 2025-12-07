@@ -23,14 +23,14 @@ export async function getTaskById(id: string) {
 
 export async function createTask(data: Omit<Task, "id" | "created_at" | "updated_at">) {
   return await prisma.task.create({
-    data,
+    data: data as any,
   })
 }
 
 export async function updateTask(id: string, data: Partial<Task>) {
   return await prisma.task.update({
     where: { id },
-    data,
+    data: data as any,
   })
 }
 

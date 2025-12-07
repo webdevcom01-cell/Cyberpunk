@@ -4,12 +4,12 @@ import { AgentDialog } from "../../components/agent-dialog"
 
 describe("AgentBuilder", () => {
   it("renders agent dialog", () => {
-    render(<AgentDialog open={true} onOpenChange={() => {}} />)
+    render(<AgentDialog open={true} onOpenChange={() => { }} agent={null} onSave={() => { }} />)
     expect(screen.getByText("Create Agent")).toBeInTheDocument()
   })
 
   it("validates required fields", async () => {
-    render(<AgentDialog open={true} onOpenChange={() => {}} />)
+    render(<AgentDialog open={true} onOpenChange={() => { }} agent={null} onSave={() => { }} />)
 
     const submitButton = screen.getByRole("button", { name: /save agent/i })
     fireEvent.click(submitButton)
@@ -20,7 +20,7 @@ describe("AgentBuilder", () => {
   })
 
   it("shows all form fields", () => {
-    render(<AgentDialog open={true} onOpenChange={() => {}} />)
+    render(<AgentDialog open={true} onOpenChange={() => { }} agent={null} onSave={() => { }} />)
 
     expect(screen.getByLabelText(/name/i)).toBeInTheDocument()
     expect(screen.getByLabelText(/role/i)).toBeInTheDocument()

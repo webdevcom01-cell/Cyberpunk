@@ -20,8 +20,8 @@ export function useRealtimeConnection(options: UseRealtimeConnectionOptions = {}
   const [status, setStatus] = useState<ConnectionStatus>("connecting")
   const [reconnectAttempts, setReconnectAttempts] = useState(0)
   const supabase = createClient()
-  const reconnectTimeoutRef = useRef<NodeJS.Timeout>()
-  const channelRef = useRef<any>()
+  const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+  const channelRef = useRef<any>(null)
 
   const connect = useCallback(() => {
     setStatus("connecting")

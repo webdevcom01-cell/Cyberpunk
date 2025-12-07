@@ -1,11 +1,26 @@
+/**
+ * Next.js 16+ Proxy Configuration
+ * 
+ * IMPORTANT: This file MUST be named "proxy.ts" (NOT "middleware.ts")
+ * - Next.js 16 deprecated middleware.ts in favor of proxy.ts
+ * - Function MUST be default export named "proxy"
+ * - DO NOT rename this file back to middleware.ts
+ * 
+ * This proxy handles:
+ * - API rate limiting (100 requests per 15 minutes)
+ * - Supabase authentication
+ * - Protected route redirects
+ * - Cookie management
+ */
+
 import { NextResponse, type NextRequest } from "next/server"
 import { createServerClient } from "@supabase/ssr"
 import { rateLimit } from "@/lib/rate-limit"
 
-export async function middleware(request: NextRequest) {
+export default async function proxy(request: NextRequest) {
   if (request.nextUrl.pathname.startsWith("/api/")) {
     const forwarded = request.headers.get("x-forwarded-for")
-    const ip = forwarded ? forwarded.split(",")[0] : request.ip || "unknown"
+    const ip = forwarded ? forwarded.split(",")[0] : (request as any).ip || "unknown"
 
     const result = rateLimit(ip, {
       windowMs: 15 * 60 * 1000, // 15 minutes

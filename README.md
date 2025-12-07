@@ -2,7 +2,21 @@
 
 A modern, production-ready web interface for managing AI agents, tasks, and workflows with real-time monitoring and observability.
 
-## Features
+## ✨ Unique Value Proposition
+
+**CrewAI Orchestrator is the ONLY platform with all three:**
+1. 🤖 **AI-Native Architecture** - Built for AI agents from day 1
+2. 💬 **Natural Language Workflows** - Create workflows by describing them
+3. 🎤 **Voice Commands** - Control your automation with voice
+
+**vs Competitors:**
+- Zapier/Make.com: Not AI-native, no NL/voice support
+- n8n: Technical, no AI orchestration, no NL/voice
+- LangFlow: AI-focused but complex, no business features
+
+---
+
+## 🎯 Features
 
 - **Agent Management**: Create, configure, and monitor AI agents with customizable models and tools
 - **Task Orchestration**: Define tasks with dependencies, priorities, and execution order
@@ -149,15 +163,23 @@ docker run -p 3000:3000 crewai-orchestrator
 
 ## API Routes
 
-All API routes are in \`app/api/\`:
+All API routes are in `app/api/`:
 
-- \`GET /api/agents\` - List all agents
-- \`POST /api/agents\` - Create new agent
-- \`GET /api/tasks\` - List all tasks
-- \`POST /api/tasks\` - Create new task
-- \`GET /api/workflows\` - List all workflows
-- \`POST /api/workflows\` - Create new workflow
-- \`GET /api/execution/traces\` - Get execution traces
+- `GET /api/agents` - List all agents
+- `POST /api/agents` - Create new agent
+- `GET /api/tasks` - List all tasks
+- `POST /api/tasks` - Create new task
+- `GET /api/workflows` - List all workflows
+- `POST /api/workflows` - Create new workflow
+- `GET /api/execution/traces` - Get execution traces
+
+## 📚 Additional Documentation
+
+- [Next.js 16 Migration Guide](./NEXT_JS_16_MIGRATION.md) - ⚠️ **Important**: Breaking changes and fixes
+- [Setup Instructions](./SETUP_INSTRUCTIONS.md) - Complete setup guide
+- [Database Setup](./DATABASE_SETUP.md) - Database configuration
+- [Testing Guide](./TESTING.md) - Testing strategy
+- [Start Here](./START_HERE.md) - Quick start guide
 
 ## Development
 

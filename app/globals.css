@@ -80,8 +80,8 @@
 }
 
 @theme inline {
-  --font-sans: "Geist Mono", "Geist Mono Fallback";
-  --font-mono: "Geist Mono", "Geist Mono Fallback";
+  --font-sans: var(--font-sans);
+  --font-mono: var(--font-mono);
   --color-background: hsl(var(--background));
   --color-foreground: hsl(var(--foreground));
   --color-card: hsl(var(--card));
@@ -124,6 +124,7 @@
   * {
     @apply border-border outline-ring/50;
   }
+
   body {
     @apply bg-background text-foreground font-mono;
     background: #000;
@@ -136,6 +137,7 @@
 
 /* Reduced motion support */
 @media (prefers-reduced-motion: reduce) {
+
   *,
   *::before,
   *::after {
@@ -174,6 +176,7 @@
 
 /* Forced colors mode support */
 @media (forced-colors: active) {
+
   .glass-card,
   .glass-sidebar {
     border: 2px solid CanvasText;
@@ -209,10 +212,12 @@
   }
 
   @keyframes blink {
+
     0%,
     50% {
       opacity: 1;
     }
+
     51%,
     100% {
       opacity: 0;
@@ -252,5 +257,31 @@
 
   .text-pretty {
     text-wrap: pretty;
+  }
+
+  /* Cyberpunk Hover Effects */
+  .cyber-hover-icon {
+    @apply transition-colors duration-300;
+  }
+
+  .group:hover .cyber-hover-icon {
+    @apply text-cyan-400;
+  }
+
+  .cyber-hover-text {
+    @apply transition-colors duration-300;
+  }
+
+  .group:hover .cyber-hover-text {
+    @apply text-cyan-400;
+  }
+
+  /* Glow effect on hover */
+  .cyber-glow {
+    @apply transition-all duration-300;
+  }
+
+  .group:hover .cyber-glow {
+    filter: drop-shadow(0 0 8px rgb(34 211 238 / 0.5));
   }
 }

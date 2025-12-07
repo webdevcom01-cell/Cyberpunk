@@ -16,6 +16,8 @@ import {
   Gamepad2,
   Store,
   ImageIcon,
+  Search,
+  MessageSquare,
 } from "lucide-react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
@@ -23,6 +25,8 @@ import { RealtimeStatus } from "./realtime-status"
 
 const navItems = [
   { title: "OVERVIEW", href: "/", icon: LayoutDashboard },
+  { title: "🔥 AI RESEARCH", href: "/research", icon: Search },
+  { title: "💬 AI CHAT", href: "/chat", icon: MessageSquare },
   { title: "NL BUILDER", href: "/workflow-builder", icon: Wand2 },
   { title: "AGENTS", href: "/agents", icon: Bot },
   { title: "TASKS", href: "/tasks", icon: Workflow },

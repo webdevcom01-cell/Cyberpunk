@@ -1,14 +1,16 @@
 import type React from "react"
 import type { Metadata, Viewport } from "next"
-import { Geist_Mono } from "next/font/google"
+import { Geist_Mono, Outfit } from "next/font/google"
 import { StarfieldBackground } from "@/components/starfield-background"
 import { Toaster } from "@/components/ui/sonner"
 import { SkipLink } from "@/components/skip-link"
 import { GlobalKeyboardShortcuts } from "@/components/keyboard-shortcuts"
 import { ErrorBoundary } from "@/components/error-boundary"
+import "@/lib/env" // Validate env vars
 import "./globals.css"
 
-const geistMono = Geist_Mono({ subsets: ["latin"] })
+const geistMono = Geist_Mono({ subsets: ["latin"], variable: "--font-mono" })
+const outfit = Outfit({ subsets: ["latin"], variable: "--font-sans" })
 
 export const metadata: Metadata = {
   title: "CrewAI Orchestrator",
@@ -48,7 +50,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className="dark">
-      <body className={`${geistMono.className} antialiased`}>
+      <body className={`${outfit.variable} ${geistMono.variable} font-sans antialiased`}>
         <ErrorBoundary>
           <SkipLink />
           <StarfieldBackground />

@@ -4,371 +4,232 @@ import { Header } from "@/components/header"
 import { SidebarNav } from "@/components/sidebar-nav"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Play, Bot, Workflow, Activity, Clock, CheckCircle2, Zap, FileText, Plus } from "lucide-react"
-import { Badge } from "@/components/ui/badge"
-import { Progress } from "@/components/ui/progress"
-import { useEffect, useState } from "react"
-import type { Agent, ExecutionTrace } from "@/lib/types"
+import { Search, MessageSquare, Bot, Workflow, Sparkles, ArrowRight, Zap, Activity, Terminal } from "lucide-react"
 import Link from "next/link"
+import { motion } from "framer-motion"
+import Image from "next/image"
 
-export default function DashboardPage() {
-  const [agents, setAgents] = useState<Agent[]>([])
-  const [traces, setTraces] = useState<ExecutionTrace[]>([])
-  const [loading, setLoading] = useState(true)
-  const [mounted, setMounted] = useState(false)
+export default function HomePage() {
+  const features = [
+    {
+      title: "AI Research",
+      description: "Deep dive analysis on any topic with autonomous agents",
+      icon: Search,
+      href: "/research",
+      color: "from-blue-500/20 to-cyan-500/20",
+      borderColor: "border-blue-500/30",
+      badge: "Most Popular",
+      delay: 0.1,
+    },
+    {
+      title: "AI Chat",
+      description: "Real-time conversational intelligence interface",
+      icon: MessageSquare,
+      href: "/chat",
+      color: "from-purple-500/20 to-pink-500/20",
+      borderColor: "border-purple-500/30",
+      badge: "Interactive",
+      delay: 0.2,
+    },
+    {
+      title: "Agent Forge",
+      description: "Design and deploy specialized autonomous agents",
+      icon: Bot,
+      href: "/agents",
+      color: "from-green-500/20 to-emerald-500/20",
+      borderColor: "border-green-500/30",
+      badge: "Advanced",
+      delay: 0.3,
+    },
+    {
+      title: "Workflow Matrix",
+      description: "Orchestrate complex multi-agent task pipelines",
+      icon: Workflow,
+      href: "/workflow-builder",
+      color: "from-orange-500/20 to-amber-500/20",
+      borderColor: "border-orange-500/30",
+      badge: "Pro",
+      delay: 0.4,
+    },
+  ]
 
-  useEffect(() => {
-    setMounted(true)
-  }, [])
-
-  useEffect(() => {
-    fetchDashboardData()
-    const interval = setInterval(fetchDashboardData, 5000)
-    return () => clearInterval(interval)
-  }, [])
-
-  const fetchDashboardData = async () => {
-    try {
-      const [agentsRes, tracesRes] = await Promise.all([fetch("/api/agents"), fetch("/api/execution/traces")])
-
-      const [agentsData, tracesData] = await Promise.all([agentsRes.json(), tracesRes.json()])
-
-      setAgents(agentsData.agents || [])
-      setTraces(tracesData.traces || [])
-    } catch (error) {
-      console.error("[v0] Failed to fetch dashboard data:", error)
-    } finally {
-      setLoading(false)
+  const container = {
+    hidden: { opacity: 0 },
+    show: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.1
+      }
     }
   }
 
-  const activeAgents = agents.filter((a) => a.status === "active")
-  const runningWorkflows = traces.filter((t) => t.status === "running" && t.span_type === "workflow")
-  const completedToday = traces.filter((t) => {
-    const today = new Date()
-    const traceDate = new Date(t.start_time)
-    return traceDate.toDateString() === today.toDateString() && t.status === "completed"
-  })
-
-  // Show loading state until client-side hydration is complete
-  if (!mounted) {
-    return (
-      <div className="flex h-screen items-center justify-center bg-black">
-        <div className="text-center">
-          <div className="text-4xl font-bold text-green-500 animate-pulse">CREWAI_SYS</div>
-          <div className="text-green-400 mt-2">Initializing...</div>
-        </div>
-      </div>
-    )
+  const item = {
+    hidden: { opacity: 0, y: 20 },
+    show: { opacity: 1, y: 0 }
   }
 
   return (
-    <div className="flex h-screen bg-background">
+    <div className="flex h-screen bg-background overflow-hidden">
       <SidebarNav />
 
-      <div className="flex flex-1 flex-col overflow-hidden">
+      <div className="flex flex-1 flex-col overflow-hidden relative">
+        {/* Background Effects */}
+        <div className="absolute inset-0 z-0 pointer-events-none">
+          <div className="absolute inset-0 bg-[url('/hero-banner.png')] bg-cover bg-center opacity-20 mix-blend-screen" />
+          <div className="absolute inset-0 bg-gradient-to-b from-background/80 via-background/90 to-background" />
+          <div className="absolute inset-0 bg-[linear-gradient(to_right,#80808012_1px,transparent_1px),linear-gradient(to_bottom,#80808012_1px,transparent_1px)] bg-[size:24px_24px]" />
+        </div>
+
         <Header
-          title="Overview"
-          description="Monitor your AI agents and workflows"
-          action={
-            <div className="flex gap-1 md:gap-2">
-              <Link href="/workflows" className="hidden sm:inline-block">
-                <Button variant="outline" size="sm" className="gap-2 rounded-xl bg-transparent text-xs md:text-sm">
-                  <Plus className="h-3 w-3 md:h-4 md:w-4" />
-                  <span className="hidden md:inline">New Workflow</span>
-                </Button>
-              </Link>
-              <Link href="/settings" className="hidden lg:inline-block">
-                <Button variant="outline" size="sm" className="gap-2 rounded-xl bg-transparent text-xs md:text-sm">
-                  <FileText className="h-3 w-3 md:h-4 md:w-4" />
-                  <span className="hidden md:inline">Import</span>
-                </Button>
-              </Link>
-              <Link href="/execution">
-                <Button size="sm" className="gap-2 rounded-xl shadow-lg text-xs md:text-sm">
-                  <Play className="h-3 w-3 md:h-4 md:w-4" />
-                  <span className="hidden sm:inline">Run</span>
-                  <span className="sm:hidden">▶</span>
-                </Button>
-              </Link>
-            </div>
-          }
+          title="CrewAI Orchestrator"
+          description="Advanced Autonomous Agent Interface"
         />
 
-        <main className="flex-1 overflow-y-auto p-3 md:p-6">
-          <div className="grid gap-3 md:gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            <Card className="glass-card shadow-xl rounded-2xl sm:col-span-2 lg:row-span-2 border-primary/20">
-              <CardHeader>
-                <CardTitle className="text-xs md:text-sm font-medium text-muted-foreground">
-                  Running Workflows
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4 md:space-y-6">
-                <div className="flex items-baseline gap-2">
-                  <div className="text-5xl md:text-7xl font-bold text-card-foreground">{runningWorkflows.length}</div>
-                  {runningWorkflows.length > 0 && (
-                    <div className="flex h-2 w-2 md:h-3 md:w-3 animate-pulse items-center justify-center rounded-full bg-accent shadow-lg shadow-accent/50" />
-                  )}
-                </div>
-                <div className="space-y-2 md:space-y-3">
-                  <div className="flex items-center justify-between text-xs md:text-sm">
-                    <span className="text-muted-foreground">
-                      {traces.filter((t) => t.status === "running").length - runningWorkflows.length} tasks active
-                    </span>
-                    <span className="text-accent font-medium">{activeAgents.length} agents online</span>
-                  </div>
-                  <Progress
-                    value={(runningWorkflows.length / Math.max(traces.length, 1)) * 100}
-                    className="h-1.5 md:h-2"
-                  />
-                  <p className="text-xs text-muted-foreground">
-                    {runningWorkflows.length} of {traces.filter((t) => t.span_type === "workflow").length} total
-                    workflows
-                  </p>
-                </div>
-              </CardContent>
-            </Card>
+        <main className="flex-1 overflow-y-auto p-6 relative z-10">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+            className="mb-12 text-center relative"
+          >
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 border border-primary/20 text-primary text-sm mb-4 animate-pulse">
+              <span className="relative flex h-2 w-2">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-primary"></span>
+              </span>
+              System Online v2.0
+            </div>
+            <h1 className="text-5xl md:text-7xl font-bold tracking-tight mb-6 bg-clip-text text-transparent bg-gradient-to-r from-primary via-cyan-400 to-purple-500 drop-shadow-[0_0_15px_rgba(var(--primary),0.5)]">
+              Orchestrate Intelligence
+            </h1>
+            <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
+              Deploy autonomous agents, build complex workflows, and analyze data with the power of next-generation AI.
+            </p>
+          </motion.div>
 
-            <Card className="glass-card shadow-xl rounded-2xl">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-xs md:text-sm font-medium text-card-foreground">Active Agents</CardTitle>
-                <div className="flex h-7 w-7 md:h-9 md:w-9 items-center justify-center rounded-xl bg-gradient-to-br from-primary/20 to-primary/10">
-                  <Bot className="h-4 w-4 md:h-5 md:w-5 text-primary" />
-                </div>
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl md:text-3xl font-bold text-card-foreground">{activeAgents.length}</div>
-                <p className="text-xs text-accent mt-1">{agents.length} total agents</p>
-              </CardContent>
-            </Card>
-
-            <Card className="glass-card shadow-xl rounded-2xl">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-xs md:text-sm font-medium text-card-foreground">Completed Today</CardTitle>
-                <div className="flex h-7 w-7 md:h-9 md:w-9 items-center justify-center rounded-xl bg-gradient-to-br from-accent/20 to-accent/10">
-                  <CheckCircle2 className="h-4 w-4 md:h-5 md:w-5 text-accent" />
-                </div>
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl md:text-3xl font-bold text-card-foreground">{completedToday.length}</div>
-                <p className="text-xs text-accent mt-1">
-                  +
-                  {Math.round(
-                    (completedToday.length / Math.max(traces.filter((t) => t.status === "completed").length, 1)) * 100,
-                  )}
-                  % success rate
-                </p>
-              </CardContent>
-            </Card>
-
-            <Card className="glass-card shadow-xl rounded-2xl sm:col-span-2 lg:col-span-1">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-xs md:text-sm font-medium text-card-foreground">Avg Duration</CardTitle>
-                <div className="flex h-7 w-7 md:h-9 md:w-9 items-center justify-center rounded-xl bg-gradient-to-br from-chart-4/20 to-chart-4/10">
-                  <Zap className="h-4 w-4 md:h-5 md:w-5 text-chart-4" />
-                </div>
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl md:text-3xl font-bold text-card-foreground">
-                  {traces.length > 0
-                    ? `${(traces.reduce((sum, t) => sum + (t.duration_ms || 0), 0) / traces.length / 1000).toFixed(1)}s`
-                    : "0s"}
-                </div>
-                <p className="text-xs text-accent mt-1">Across all executions</p>
-              </CardContent>
-            </Card>
-          </div>
-
-          <div className="mt-6 grid gap-6 lg:grid-cols-2">
-            <Card className="glass-card shadow-xl rounded-2xl">
-              <CardHeader>
-                <CardTitle className="text-card-foreground">Recent Executions</CardTitle>
-                <CardDescription>Latest workflow runs with execution timeline</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                {traces.slice(0, 4).map((trace) => {
-                  const duration = trace.duration_ms ? `${(trace.duration_ms / 1000).toFixed(1)}s` : "Running..."
-                  const timeAgo = Math.floor((Date.now() - new Date(trace.start_time).getTime()) / 60000)
-
-                  return (
-                    <div
-                      key={trace.id}
-                      className="group flex flex-col gap-3 rounded-xl border border-border/50 bg-card/40 backdrop-blur-sm p-4 transition-all duration-200 hover:bg-card/60 hover:shadow-lg"
-                    >
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-3">
-                          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-primary/20 to-accent/10">
-                            <Workflow className="h-5 w-5 text-primary" />
+          <motion.div
+            variants={container}
+            initial="hidden"
+            animate="show"
+            className="grid gap-6 md:grid-cols-2 lg:grid-cols-4 mb-12"
+          >
+            {features.map((feature) => {
+              const Icon = feature.icon
+              return (
+                <motion.div key={feature.href} variants={item}>
+                  <Link href={feature.href}>
+                    <Card className={`glass-card ${feature.borderColor} hover:scale-[1.02] transition-all duration-300 cursor-pointer group h-full relative overflow-hidden`}>
+                      <div className={`absolute inset-0 bg-gradient-to-br ${feature.color} opacity-0 group-hover:opacity-10 transition-opacity duration-500`} />
+                      <CardHeader>
+                        <div className="flex items-start justify-between mb-4">
+                          <div className={`h-12 w-12 rounded-xl bg-gradient-to-br ${feature.color} flex items-center justify-center shadow-lg shadow-primary/10 group-hover:shadow-primary/30 transition-shadow`}>
+                            <Icon className="h-6 w-6 text-foreground" />
                           </div>
-                          <div>
-                            <p className="text-sm font-medium text-card-foreground">{trace.span_name}</p>
-                            <p className="text-xs text-muted-foreground">
-                              {timeAgo < 1 ? "Just now" : `${timeAgo}m ago`} • {duration}
-                            </p>
-                          </div>
+                          <span className="text-[10px] uppercase tracking-wider font-bold bg-primary/10 border border-primary/20 text-primary px-2 py-1 rounded-sm">
+                            {feature.badge}
+                          </span>
                         </div>
-                        <Badge
-                          variant={
-                            trace.status === "completed"
-                              ? "default"
-                              : trace.status === "running"
-                                ? "secondary"
-                                : "destructive"
-                          }
-                          className="capitalize rounded-lg"
-                        >
-                          {trace.status}
-                        </Badge>
-                      </div>
+                        <CardTitle className="flex items-center gap-2 text-lg">
+                          {feature.title}
+                        </CardTitle>
+                        <CardDescription className="text-sm line-clamp-2">
+                          {feature.description}
+                        </CardDescription>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="flex items-center text-primary text-sm font-medium opacity-0 group-hover:opacity-100 transform translate-x-[-10px] group-hover:translate-x-0 transition-all duration-300">
+                          Initialize <ArrowRight className="ml-2 h-4 w-4" />
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </Link>
+                </motion.div>
+              )
+            })}
+          </motion.div>
 
-                      <div className="relative h-2 rounded-full bg-muted/50 overflow-hidden">
-                        <div
-                          className={`absolute h-full rounded-full transition-all ${
-                            trace.status === "completed"
-                              ? "bg-accent"
-                              : trace.status === "running"
-                                ? "bg-primary animate-pulse"
-                                : "bg-destructive"
-                          }`}
-                          style={{
-                            left: "10%",
-                            width: trace.status === "completed" ? "80%" : "40%",
-                          }}
-                        />
-                      </div>
+          <div className="grid gap-6 md:grid-cols-3">
+            <motion.div
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.6 }}
+              className="md:col-span-2"
+            >
+              <Card className="glass-card h-full">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Activity className="h-5 w-5 text-primary" />
+                    System Metrics
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-3 gap-4">
+                    <div className="p-4 rounded-lg bg-muted/20 border border-border/50">
+                      <div className="text-sm text-muted-foreground mb-1">Active Agents</div>
+                      <div className="text-2xl font-mono font-bold text-primary">12</div>
                     </div>
-                  )
-                })}
-
-                {traces.length === 0 && (
-                  <div className="text-center py-12 text-muted-foreground">
-                    No executions yet. Start a workflow to see results here.
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-
-            <Card className="glass-card shadow-xl rounded-2xl">
-              <CardHeader>
-                <CardTitle className="text-card-foreground">Active Agents</CardTitle>
-                <CardDescription>Real-time agent status and utilization</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                {agents.slice(0, 3).map((agent) => (
-                  <div
-                    key={agent.id}
-                    className="group flex flex-col gap-3 rounded-xl border border-border/50 bg-card/40 backdrop-blur-sm p-4 transition-all duration-200 hover:bg-card/60 hover:shadow-lg"
-                  >
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-3">
-                        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-primary/20 to-accent/20">
-                          <Bot className="h-5 w-5 text-primary" />
-                        </div>
-                        <div>
-                          <p className="text-sm font-medium text-card-foreground">{agent.name}</p>
-                          <p className="text-xs text-muted-foreground">
-                            {agent.role} • {agent.total_executions} executions
-                          </p>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <div
-                          className={`h-2.5 w-2.5 rounded-full ${
-                            agent.status === "active"
-                              ? "bg-accent animate-pulse shadow-lg shadow-accent/50"
-                              : "bg-muted-foreground"
-                          }`}
-                        />
-                        <span className="text-xs capitalize text-muted-foreground">{agent.status}</span>
-                      </div>
+                    <div className="p-4 rounded-lg bg-muted/20 border border-border/50">
+                      <div className="text-sm text-muted-foreground mb-1">Tasks Pending</div>
+                      <div className="text-2xl font-mono font-bold text-yellow-500">5</div>
                     </div>
-
-                    <div className="space-y-1">
-                      <div className="flex items-center justify-between text-xs">
-                        <span className="text-muted-foreground">Success Rate</span>
-                        <span className="font-medium text-card-foreground">{agent.success_rate.toFixed(1)}%</span>
-                      </div>
-                      <Progress value={agent.success_rate} className="h-1.5" />
+                    <div className="p-4 rounded-lg bg-muted/20 border border-border/50">
+                      <div className="text-sm text-muted-foreground mb-1">Uptime</div>
+                      <div className="text-2xl font-mono font-bold text-green-500">99.9%</div>
                     </div>
                   </div>
-                ))}
+                  <div className="mt-6 h-[200px] w-full bg-muted/10 rounded-lg border border-border/50 flex items-center justify-center relative overflow-hidden group">
+                    <div className="absolute inset-0 flex items-center justify-center">
+                      <div className="w-full h-full bg-[linear-gradient(to_right,#80808012_1px,transparent_1px),linear-gradient(to_bottom,#80808012_1px,transparent_1px)] bg-[size:16px_16px]" />
+                    </div>
+                    <div className="text-muted-foreground text-sm flex items-center gap-2 z-10">
+                      <Terminal className="h-4 w-4" />
+                      Waiting for data stream...
+                    </div>
+                    {/* Fake data stream animation */}
+                    <div className="absolute bottom-0 left-0 right-0 h-1 bg-primary/50 shadow-[0_0_10px_var(--primary)] animate-[pulse_2s_infinite]" />
+                  </div>
+                </CardContent>
+              </Card>
+            </motion.div>
 
-                {agents.length === 0 && (
-                  <div className="text-center py-12 text-muted-foreground">No agents configured yet.</div>
-                )}
-
-                <Link href="/agents">
-                  <Button
-                    variant="outline"
-                    className="w-full bg-card/40 backdrop-blur-sm rounded-xl border-border/50 hover:bg-card/60"
-                  >
-                    <Bot className="mr-2 h-4 w-4" />
-                    Manage Agents
-                  </Button>
-                </Link>
-              </CardContent>
-            </Card>
+            <motion.div
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.7 }}
+            >
+              <Card className="glass-card h-full">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Zap className="h-5 w-5 text-yellow-500" />
+                    Quick Actions
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <Link href="/research">
+                    <Button variant="outline" className="w-full justify-start hover:bg-primary/10 hover:text-cyan-400 hover:border-primary/50 transition-all group">
+                      <Search className="mr-2 h-4 w-4" />
+                      New Research Task
+                      <ArrowRight className="ml-auto h-4 w-4 opacity-0 group-hover:opacity-100 transition-opacity" />
+                    </Button>
+                  </Link>
+                  <Link href="/agents">
+                    <Button variant="outline" className="w-full justify-start hover:bg-primary/10 hover:text-cyan-400 hover:border-primary/50 transition-all group">
+                      <Bot className="mr-2 h-4 w-4" />
+                      Deploy Agent
+                      <ArrowRight className="ml-auto h-4 w-4 opacity-0 group-hover:opacity-100 transition-opacity" />
+                    </Button>
+                  </Link>
+                  <Link href="/workflow-builder">
+                    <Button variant="outline" className="w-full justify-start hover:bg-primary/10 hover:text-cyan-400 hover:border-primary/50 transition-all group">
+                      <Workflow className="mr-2 h-4 w-4" />
+                      Create Workflow
+                      <ArrowRight className="ml-auto h-4 w-4 opacity-0 group-hover:opacity-100 transition-opacity" />
+                    </Button>
+                  </Link>
+                </CardContent>
+              </Card>
+            </motion.div>
           </div>
-
-          <Card className="mt-4 md:mt-6 glass-card shadow-xl rounded-2xl">
-            <CardHeader>
-              <CardTitle className="text-sm md:text-base text-card-foreground">System Health</CardTitle>
-              <CardDescription className="text-xs md:text-sm">Real-time metrics and uptime monitoring</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="grid gap-3 md:gap-4 sm:grid-cols-2 md:grid-cols-3">
-                <div className="space-y-3 rounded-xl bg-muted/30 backdrop-blur-sm p-4 border border-border/30">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-br from-primary/20 to-primary/10">
-                        <Activity className="h-5 w-5 text-primary" />
-                      </div>
-                      <div>
-                        <p className="text-xs text-muted-foreground">CPU Usage</p>
-                        <p className="text-xl font-semibold text-card-foreground">42%</p>
-                      </div>
-                    </div>
-                  </div>
-                  <Progress value={42} className="h-2" />
-                  <p className="text-xs text-muted-foreground">Normal range (threshold: 70%)</p>
-                </div>
-
-                <div className="space-y-3 rounded-xl bg-muted/30 backdrop-blur-sm p-4 border border-border/30">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-br from-accent/20 to-accent/10">
-                        <Activity className="h-5 w-5 text-accent" />
-                      </div>
-                      <div>
-                        <p className="text-xs text-muted-foreground">Memory</p>
-                        <p className="text-xl font-semibold text-card-foreground">1.2GB</p>
-                      </div>
-                    </div>
-                  </div>
-                  <Progress value={60} className="h-2" />
-                  <p className="text-xs text-muted-foreground">2.0GB available</p>
-                </div>
-
-                <div className="space-y-3 rounded-xl bg-muted/30 backdrop-blur-sm p-4 border border-border/30">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-br from-chart-3/20 to-chart-3/10">
-                        <Clock className="h-5 w-5 text-chart-3" />
-                      </div>
-                      <div>
-                        <p className="text-xs text-muted-foreground">Uptime</p>
-                        <p className="text-xl font-semibold text-card-foreground">99.9%</p>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="flex items-center justify-between text-xs text-muted-foreground">
-                    <span>Last restart:</span>
-                    <span>14 days ago</span>
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
         </main>
       </div>
     </div>

@@ -7,6 +7,12 @@ export async function GET() {
   try {
     const supabase = await createClient()
 
+    // Check authentication
+    const { data: { user }, error: authError } = await supabase.auth.getUser()
+    if (authError || !user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+    }
+
     const { data: agents, error } = await supabase.from("agents").select("*").order("created_at", { ascending: false })
 
     if (error) {
@@ -24,6 +30,13 @@ export async function GET() {
 export async function POST(request: Request) {
   try {
     const supabase = await createClient()
+
+    // Check authentication
+    const { data: { user }, error: authError } = await supabase.auth.getUser()
+    if (authError || !user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+    }
+
     const body = await request.json()
 
     const validation = validateRequest(agentSchema, body)

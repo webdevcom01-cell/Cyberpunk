@@ -8,6 +8,8 @@ import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
 import { Flame, Star, DollarSign, Verified, Search } from "lucide-react"
 import { useState } from "react"
+import { toast } from "sonner"
+import { useRouter } from "next/navigation"
 
 interface MarketplaceAgent {
   id: string
@@ -21,6 +23,7 @@ interface MarketplaceAgent {
 }
 
 export default function MarketplacePage() {
+  const router = useRouter()
   const [agents] = useState<MarketplaceAgent[]>([
     {
       id: "1",
@@ -54,6 +57,24 @@ export default function MarketplacePage() {
     },
   ])
 
+  const handlePreview = (agent: MarketplaceAgent) => {
+    toast.info(`Opening preview for ${agent.name}...`)
+    // In a real app, this would open a modal or navigate to preview page
+  }
+
+  const handleAddAgent = (agent: MarketplaceAgent) => {
+    if (agent.premium) {
+      toast.success(`Redirecting to checkout for ${agent.name}...`)
+      // In a real app, this would navigate to payment page
+    } else {
+      toast.success(`${agent.name} added to your workspace!`)
+      // In a real app, this would add the agent to user's workspace
+      setTimeout(() => {
+        router.push('/agents')
+      }, 1500)
+    }
+  }
+
   return (
     <div className="flex h-screen bg-background">
       <SidebarNav />
@@ -63,7 +84,7 @@ export default function MarketplacePage() {
           title="Agent Marketplace"
           description="Community-driven agent sharing"
           action={
-            <Button>
+            <Button onClick={() => toast.info("Publishing feature coming soon!")}>
               <DollarSign className="h-4 w-4 mr-2" />
               Publish Your Agent
             </Button>
@@ -88,7 +109,7 @@ export default function MarketplacePage() {
 
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
               {agents.map((agent, idx) => (
-                <Card key={agent.id} className="glass-card hover:border-accent/50 transition-all group">
+                <Card key={agent.id} className="glass-card hover:border-cyan-400/50 transition-all group">
                   <CardHeader>
                     <div className="flex items-start justify-between mb-2">
                       <span className="text-2xl font-bold text-primary">{idx + 1}.</span>
@@ -105,7 +126,7 @@ export default function MarketplacePage() {
                         )}
                       </div>
                     </div>
-                    <CardTitle className="group-hover:text-accent transition-colors">{agent.name}</CardTitle>
+                    <CardTitle className="group-hover:text-cyan-400 transition-colors">{agent.name}</CardTitle>
                     <CardDescription className="text-xs">
                       by {agent.creator} | {agent.uses.toLocaleString()} uses
                     </CardDescription>
@@ -122,10 +143,19 @@ export default function MarketplacePage() {
                         )}
                       </div>
                       <div className="flex gap-2">
-                        <Button variant="outline" size="sm">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handlePreview(agent)}
+                        >
                           Preview
                         </Button>
-                        <Button size="sm">{agent.premium ? "Buy" : "Add to Workspace"}</Button>
+                        <Button
+                          size="sm"
+                          onClick={() => handleAddAgent(agent)}
+                        >
+                          {agent.premium ? "Buy" : "Add to Workspace"}
+                        </Button>
                       </div>
                     </div>
                   </CardContent>

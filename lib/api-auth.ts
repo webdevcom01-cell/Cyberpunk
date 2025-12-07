@@ -58,5 +58,5 @@ export async function checkWorkspacePermission(
   }
 
   const roleHierarchy = { viewer: 0, member: 1, admin: 2 }
-  return roleHierarchy[member.role] >= roleHierarchy[requiredRole]
+  return roleHierarchy[member.role as keyof typeof roleHierarchy] >= roleHierarchy[requiredRole]
 }
