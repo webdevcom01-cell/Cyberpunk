@@ -1,21 +1,55 @@
-import { Suspense } from "react"
-import { createClient } from "@/lib/supabase/server"
-import { redirect } from "next/navigation"
+"use client"
+
+import { useEffect, useState } from "react"
+import { createClient } from "@/lib/supabase/client"
+import { useRouter } from "next/navigation"
 import { NaturalLanguageWorkflowBuilder } from "@/components/nl-workflow-builder"
+import { Loader2 } from "lucide-react"
 
-export const metadata = {
-  title: "Natural Language Workflow Builder | CrewAI Orchestrator",
-  description: "Create AI workflows using natural language",
-}
+export default function WorkflowBuilderPage() {
+  const [user, setUser] = useState<any>(null)
+  const [loading, setLoading] = useState(true)
+  const router = useRouter()
+  const supabase = createClient()
 
-export default async function WorkflowBuilderPage() {
-  const supabase = await createClient()
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
+  useEffect(() => {
+    const checkAuth = async () => {
+      const { data: { user } } = await supabase.auth.getUser()
+
+      if (!user) {
+        router.push("/login")
+        return
+      }
+
+      setUser(user)
+      setLoading(false)
+    }
+
+    checkAuth()
+
+    // Listen for auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === 'SIGNED_OUT') {
+        router.push('/login')
+      } else if (session?.user) {
+        setUser(session.user)
+        setLoading(false)
+      }
+    })
+
+    return () => subscription.unsubscribe()
+  }, [router, supabase.auth])
+
+  if (loading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    )
+  }
 
   if (!user) {
-    redirect("/login")
+    return null
   }
 
   return (
@@ -25,9 +59,7 @@ export default async function WorkflowBuilderPage() {
         <p className="text-muted-foreground">Describe your workflow in plain English and watch AI create it for you</p>
       </div>
 
-      <Suspense fallback={<div>Loading...</div>}>
-        <NaturalLanguageWorkflowBuilder userId={user.id} />
-      </Suspense>
+      <NaturalLanguageWorkflowBuilder userId={user.id} />
     </div>
   )
 }
