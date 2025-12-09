@@ -23,34 +23,29 @@ export default function ResetPasswordPage() {
   const router = useRouter()
 
   useEffect(() => {
-    const handleAuth = async () => {
+    const checkSession = async () => {
       const supabase = createClient()
-      const searchParams = new URLSearchParams(window.location.search)
-      const code = searchParams.get("code")
-      const errorDescription = searchParams.get("error_description")
+      const { data: { session } } = await supabase.auth.getSession()
 
-      if (errorDescription) {
-        setError(decodeURIComponent(errorDescription))
-        return
-      }
+      if (!session) {
+        // Double check if we have a code in the URL, which would mean the callback failed or wasn't used
+        const searchParams = new URLSearchParams(window.location.search)
+        const code = searchParams.get("code")
 
-      if (code) {
-        // Exchange code for session
-        const { error } = await supabase.auth.exchangeCodeForSession(code)
-        if (error) {
-          setError(error.message)
-        }
-        // If successful, the session is set and we can proceed
-      } else {
-        // No code, check if we already have a session
-        const { data: { session } } = await supabase.auth.getSession()
-        if (!session) {
+        if (code) {
+          // If code is present but no session, it means we bypassed the callback or it failed.
+          // We can try one last ditch effort to exchange it here, but primarily we expect the callback to have handled it.
+          const { error } = await supabase.auth.exchangeCodeForSession(code)
+          if (error) {
+            setError(error.message)
+          }
+        } else {
           setError("Invalid or expired reset link. Please request a new password reset.")
         }
       }
     }
 
-    handleAuth()
+    checkSession()
   }, [])
 
   const validatePassword = (pwd: string): string | null => {
