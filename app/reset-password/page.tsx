@@ -23,19 +23,24 @@ export default function ResetPasswordPage() {
   const router = useRouter()
 
   useEffect(() => {
-    // Check if we have the hash fragment with access token
-    const hashParams = new URLSearchParams(window.location.hash.substring(1))
-    const accessToken = hashParams.get("access_token")
-    const errorDescription = hashParams.get("error_description")
-    
-    if (errorDescription) {
-      setError(decodeURIComponent(errorDescription))
+    // With PKCE flow, the session is already established by the callback route
+    // We just need to verify we have a user session
+    const checkSession = async () => {
+      const supabase = createClient()
+      const { data: { session } } = await supabase.auth.getSession()
+
+      if (!session) {
+        // If no session, check if we have a code in query params (fallback)
+        const searchParams = new URLSearchParams(window.location.search)
+        const code = searchParams.get("code")
+
+        if (!code) {
+          setError("Invalid or expired reset link. Please request a new password reset.")
+        }
+      }
     }
-    
-    if (!accessToken && !errorDescription) {
-      // No token and no error - might be direct access
-      setError("Invalid or expired reset link. Please request a new password reset.")
-    }
+
+    checkSession()
   }, [])
 
   const validatePassword = (pwd: string): string | null => {
@@ -56,7 +61,7 @@ export default function ResetPasswordPage() {
 
   const handleResetPassword = async (e: React.FormEvent) => {
     e.preventDefault()
-    
+
     // Validate passwords match
     if (password !== confirmPassword) {
       toast.error("Passwords do not match")
@@ -83,7 +88,7 @@ export default function ResetPasswordPage() {
       } else {
         setSuccess(true)
         toast.success("Password reset successful!")
-        
+
         // Redirect to login after 3 seconds
         setTimeout(() => {
           router.push("/login")
@@ -119,8 +124,8 @@ export default function ResetPasswordPage() {
               </Button>
             </Link>
             <div className="text-center">
-              <Link 
-                href="/login" 
+              <Link
+                href="/login"
                 className="text-sm text-muted-foreground hover:text-primary transition-colors"
               >
                 Back to login
@@ -240,7 +245,7 @@ export default function ResetPasswordPage() {
                 {/[0-9]/.test(password) ? "✓" : "○"} One number
               </p>
             </div>
-            
+
             <Button type="submit" className="w-full" disabled={loading}>
               {loading ? (
                 <>
@@ -257,8 +262,8 @@ export default function ResetPasswordPage() {
           </form>
 
           <div className="mt-6 text-center">
-            <Link 
-              href="/login" 
+            <Link
+              href="/login"
               className="text-sm text-muted-foreground hover:text-primary transition-colors"
             >
               Back to login

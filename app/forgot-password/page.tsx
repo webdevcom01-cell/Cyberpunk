@@ -23,7 +23,7 @@ export default function ForgotPasswordPage() {
     try {
       const supabase = createClient()
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${window.location.origin}/reset-password`,
+        redirectTo: `${window.location.origin}/auth/callback?next=/reset-password`,
       })
 
       if (error) {
@@ -63,8 +63,8 @@ export default function ForgotPasswordPage() {
               <p>⏰ The link expires in 1 hour</p>
             </div>
 
-            <Button 
-              variant="outline" 
+            <Button
+              variant="outline"
               className="w-full"
               onClick={() => setEmailSent(false)}
             >
@@ -73,8 +73,8 @@ export default function ForgotPasswordPage() {
             </Button>
 
             <div className="text-center">
-              <Link 
-                href="/login" 
+              <Link
+                href="/login"
                 className="text-sm text-muted-foreground hover:text-primary transition-colors inline-flex items-center gap-1"
               >
                 <ArrowLeft className="h-4 w-4" />
@@ -117,7 +117,7 @@ export default function ForgotPasswordPage() {
                 autoFocus
               />
             </div>
-            
+
             <Button type="submit" className="w-full" disabled={loading}>
               {loading ? (
                 <>
@@ -134,8 +134,8 @@ export default function ForgotPasswordPage() {
           </form>
 
           <div className="mt-6 text-center">
-            <Link 
-              href="/login" 
+            <Link
+              href="/login"
               className="text-sm text-muted-foreground hover:text-primary transition-colors inline-flex items-center gap-1"
             >
               <ArrowLeft className="h-4 w-4" />
