@@ -23,24 +23,34 @@ export default function ResetPasswordPage() {
   const router = useRouter()
 
   useEffect(() => {
-    // With PKCE flow, the session is already established by the callback route
-    // We just need to verify we have a user session
-    const checkSession = async () => {
+    const handleAuth = async () => {
       const supabase = createClient()
-      const { data: { session } } = await supabase.auth.getSession()
+      const searchParams = new URLSearchParams(window.location.search)
+      const code = searchParams.get("code")
+      const errorDescription = searchParams.get("error_description")
 
-      if (!session) {
-        // If no session, check if we have a code in query params (fallback)
-        const searchParams = new URLSearchParams(window.location.search)
-        const code = searchParams.get("code")
+      if (errorDescription) {
+        setError(decodeURIComponent(errorDescription))
+        return
+      }
 
-        if (!code) {
+      if (code) {
+        // Exchange code for session
+        const { error } = await supabase.auth.exchangeCodeForSession(code)
+        if (error) {
+          setError(error.message)
+        }
+        // If successful, the session is set and we can proceed
+      } else {
+        // No code, check if we already have a session
+        const { data: { session } } = await supabase.auth.getSession()
+        if (!session) {
           setError("Invalid or expired reset link. Please request a new password reset.")
         }
       }
     }
 
-    checkSession()
+    handleAuth()
   }, [])
 
   const validatePassword = (pwd: string): string | null => {
